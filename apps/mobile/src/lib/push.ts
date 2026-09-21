@@ -3,19 +3,26 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Web push needs a service worker + VAPID keys, not set up yet; the PWA
+// falls back to the in-app realtime feed for now (see lib/calls.ts).
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 // Registers this device for push and returns an Expo push token, or null if
 // permission was denied / running somewhere push isn't supported (e.g. web,
 // or a simulator without push capability, or no EAS project configured yet).
 export async function registerForPushToken(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return null;
+  }
   if (!Device.isDevice) {
     return null; // push notifications don't work on simulators/emulators
   }

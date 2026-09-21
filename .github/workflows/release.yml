@@ -28,6 +28,18 @@ jobs:
         with:
           go-version-file: server/go.mod
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Build web PWA (embedded into the server binary)
+        working-directory: apps/mobile
+        run: |
+          npm ci
+          npx expo export -p web --output-dir ../../server/web/dist
+
       - name: Build
         working-directory: server
         env:

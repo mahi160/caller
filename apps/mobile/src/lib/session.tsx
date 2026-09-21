@@ -1,5 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Platform } from 'react-native';
 
 import {
   loadStoredServerUrl,
@@ -52,11 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const stored = await loadStoredServerUrl();
-      if (stored) {
-        setServerUrlState(stored);
+      if (Platform.OS === 'web') {
+        // the PWA is served by the same server it talks to; no discovery needed
+        setServerUrlState('');
       } else {
-        await runDiscovery();
+        const stored = await loadStoredServerUrl();
+        if (stored) {
+          setServerUrlState(stored);
+        } else {
+          await runDiscovery();
+        }
       }
 
       const [storedToken, storedUser] = await Promise.all([

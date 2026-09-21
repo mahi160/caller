@@ -55,7 +55,7 @@ export default function LoginScreen() {
     }
   };
 
-  if (!serverUrl) {
+  if (serverUrl === null) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.safeArea}>

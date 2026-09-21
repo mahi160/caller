@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -8,12 +9,14 @@ import (
 
 	"github.com/hashicorp/mdns"
 	"github.com/pocketbase/pocketbase"
+	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 
 	"caller/server/internal/adminweb"
 	"caller/server/internal/callsapi"
 	"caller/server/internal/pingsapi"
 	_ "caller/server/migrations"
+	"caller/server/web"
 )
 
 func main() {
@@ -37,6 +40,13 @@ func main() {
 		adminweb.Register(se)
 		callsapi.Register(se)
 		pingsapi.Register(se)
+
+		webFS, err := fs.Sub(web.Dist, "dist")
+		if err != nil {
+			return err
+		}
+		se.Router.GET("/{path...}", apis.Static(webFS, true))
+
 		go advertiseMDNS()
 		return se.Next()
 	})
