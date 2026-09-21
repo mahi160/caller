@@ -15,6 +15,9 @@ on:
     tags:
       - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   server:
     runs-on: ubuntu-latest
