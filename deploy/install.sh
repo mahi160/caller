@@ -40,9 +40,15 @@ if [ ! -f /etc/caller/caller.env ]; then
 fi
 
 echo "==> Installing binary"
-curl -fsSL "$ASSET_URL" -o /opt/caller/caller
-chmod 755 /opt/caller/caller
-chown caller:caller /opt/caller/caller
+# Download to a temp file first: writing straight into /opt/caller/caller
+# fails with ETXTBSY if that binary is currently running (the common case on
+# an update), since curl opens the destination for direct writing. Renaming
+# over the target is atomic and doesn't touch the running process's inode.
+TMP_BIN="$(mktemp /opt/caller/.caller.XXXXXX)"
+curl -fsSL "$ASSET_URL" -o "$TMP_BIN"
+chmod 755 "$TMP_BIN"
+chown caller:caller "$TMP_BIN"
+mv "$TMP_BIN" /opt/caller/caller
 
 echo "==> Installing systemd unit"
 curl -fsSL "https://raw.githubusercontent.com/${REPO}/${BRANCH}/deploy/caller.service" \
