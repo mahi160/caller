@@ -1,6 +1,6 @@
 import EventSource from 'react-native-sse';
 
-import { API_URL } from '@/lib/api';
+import { apiUrl } from '@/lib/server';
 
 type RealtimeEvent<T> = {
   action: 'create' | 'update' | 'delete';
@@ -17,7 +17,7 @@ export function subscribeToCollection<T>(
   collection: string,
   onEvent: (event: RealtimeEvent<T>) => void,
 ): () => void {
-  const es = new EventSource<string>(`${API_URL}/api/realtime`, {
+  const es = new EventSource<string>(`${apiUrl.current}/api/realtime`, {
     headers: { Authorization: token },
   });
 
@@ -27,7 +27,7 @@ export function subscribeToCollection<T>(
     try {
       const data = JSON.parse(event.data);
       clientId = data.clientId;
-      fetch(`${API_URL}/api/realtime`, {
+      fetch(`${apiUrl.current}/api/realtime`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: token },
         body: JSON.stringify({ clientId, subscriptions: [collection] }),

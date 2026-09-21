@@ -1,22 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
-
-// Base URL of the PocketBase-backed server. Resolved at runtime via LAN
-// discovery or manual entry (see lib/discovery.ts + lib/session.tsx) and
-// persisted here; EXPO_PUBLIC_API_URL only pins a fixed default for local
-// dev. `let` (not `const`) so imports of API_URL see updates live.
-const SERVER_URL_KEY = 'caller_server_url';
-export let API_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
-
-export async function loadStoredServerUrl(): Promise<string | null> {
-  const stored = await SecureStore.getItemAsync(SERVER_URL_KEY);
-  if (stored) API_URL = stored;
-  return stored;
-}
-
-export async function setServerUrl(url: string): Promise<void> {
-  API_URL = url;
-  await SecureStore.setItemAsync(SERVER_URL_KEY, url);
-}
+import { apiUrl } from '@/lib/server';
 
 export type CallerUser = {
   id: string;
@@ -53,7 +35,7 @@ export class ApiError extends Error {
 }
 
 export async function loginWithPin(username: string, pin: string): Promise<AuthResult> {
-  const res = await fetch(`${API_URL}/api/collections/users/auth-with-password`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/users/auth-with-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ identity: username, password: pin }),
@@ -76,7 +58,7 @@ export async function changePin(
   oldPin: string,
   newPin: string,
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/api/collections/users/records/${userId}`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/users/records/${userId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -99,7 +81,7 @@ export async function changePin(
 }
 
 export async function saveLanguage(token: string, userId: string, language: 'en' | 'bn'): Promise<void> {
-  const res = await fetch(`${API_URL}/api/collections/users/records/${userId}`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/users/records/${userId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ language }),
@@ -110,7 +92,7 @@ export async function saveLanguage(token: string, userId: string, language: 'en'
 }
 
 export async function savePushToken(token: string, userId: string, expoPushToken: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/collections/users/records/${userId}`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/users/records/${userId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ expoPushToken }),
@@ -125,7 +107,7 @@ function authHeaders(token: string) {
 }
 
 export async function listItems(token: string): Promise<CallerItem[]> {
-  const res = await fetch(`${API_URL}/api/collections/items/records?perPage=200&sort=name`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/items/records?perPage=200&sort=name`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -136,7 +118,7 @@ export async function listItems(token: string): Promise<CallerItem[]> {
 }
 
 export async function listPins(token: string): Promise<CallerPin[]> {
-  const res = await fetch(`${API_URL}/api/collections/pins/records?perPage=200`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/pins/records?perPage=200`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -147,7 +129,7 @@ export async function listPins(token: string): Promise<CallerPin[]> {
 }
 
 export async function pinItem(token: string, userId: string, itemId: string): Promise<CallerPin> {
-  const res = await fetch(`${API_URL}/api/collections/pins/records`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/pins/records`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ user: userId, item: itemId }),
@@ -172,7 +154,7 @@ export type CallerSubscription = {
 };
 
 export async function listTopics(token: string): Promise<CallerTopic[]> {
-  const res = await fetch(`${API_URL}/api/collections/topics/records?perPage=200&sort=name`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/topics/records?perPage=200&sort=name`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -183,7 +165,7 @@ export async function listTopics(token: string): Promise<CallerTopic[]> {
 }
 
 export async function listSubscriptions(token: string): Promise<CallerSubscription[]> {
-  const res = await fetch(`${API_URL}/api/collections/subscriptions/records?perPage=200`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/subscriptions/records?perPage=200`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -194,7 +176,7 @@ export async function listSubscriptions(token: string): Promise<CallerSubscripti
 }
 
 export async function subscribeToTopic(token: string, userId: string, topicId: string): Promise<CallerSubscription> {
-  const res = await fetch(`${API_URL}/api/collections/subscriptions/records`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/subscriptions/records`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ user: userId, topic: topicId }),
@@ -207,7 +189,7 @@ export async function subscribeToTopic(token: string, userId: string, topicId: s
 }
 
 export async function unsubscribeFromTopic(token: string, subscriptionId: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/collections/subscriptions/records/${subscriptionId}`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/subscriptions/records/${subscriptionId}`, {
     method: 'DELETE',
     headers: authHeaders(token),
   });
@@ -217,7 +199,7 @@ export async function unsubscribeFromTopic(token: string, subscriptionId: string
 }
 
 export async function unpinItem(token: string, pinId: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/collections/pins/records/${pinId}`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/pins/records/${pinId}`, {
     method: 'DELETE',
     headers: authHeaders(token),
   });
@@ -234,7 +216,7 @@ export type CallerPing = {
 };
 
 export async function sendPing(token: string, topicId: string): Promise<CallerPing> {
-  const res = await fetch(`${API_URL}/api/topics/${topicId}/ping`, {
+  const res = await fetch(`${apiUrl.current}/api/topics/${topicId}/ping`, {
     method: 'POST',
     headers: authHeaders(token),
   });
@@ -245,7 +227,7 @@ export async function sendPing(token: string, topicId: string): Promise<CallerPi
 }
 
 export async function listActivePings(token: string): Promise<CallerPing[]> {
-  const res = await fetch(`${API_URL}/api/pings/active`, {
+  const res = await fetch(`${apiUrl.current}/api/pings/active`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -273,7 +255,7 @@ export type CallerCall = {
 };
 
 export async function listCalls(token: string): Promise<CallerCall[]> {
-  const res = await fetch(`${API_URL}/api/collections/calls/records?perPage=200&sort=-created`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/calls/records?perPage=200&sort=-created`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -290,7 +272,7 @@ export async function createCall(
   targetRunnerId?: string,
   buyNote?: string,
 ): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/collections/calls/records`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/calls/records`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({
@@ -309,7 +291,7 @@ export async function createCall(
 }
 
 export async function declineCall(token: string, callId: string): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/calls/${callId}/decline`, {
+  const res = await fetch(`${apiUrl.current}/api/calls/${callId}/decline`, {
     method: 'POST',
     headers: authHeaders(token),
   });
@@ -320,7 +302,7 @@ export async function declineCall(token: string, callId: string): Promise<Caller
 }
 
 export async function completeCall(token: string, callId: string): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/calls/${callId}/complete`, {
+  const res = await fetch(`${apiUrl.current}/api/calls/${callId}/complete`, {
     method: 'POST',
     headers: authHeaders(token),
   });
@@ -331,7 +313,7 @@ export async function completeCall(token: string, callId: string): Promise<Calle
 }
 
 export async function cancelCall(token: string, callId: string): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/calls/${callId}/cancel`, {
+  const res = await fetch(`${apiUrl.current}/api/calls/${callId}/cancel`, {
     method: 'POST',
     headers: authHeaders(token),
   });
@@ -342,7 +324,7 @@ export async function cancelCall(token: string, callId: string): Promise<CallerC
 }
 
 export async function refireCall(token: string, callId: string): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/calls/${callId}/refire`, {
+  const res = await fetch(`${apiUrl.current}/api/calls/${callId}/refire`, {
     method: 'POST',
     headers: authHeaders(token),
   });
@@ -353,7 +335,7 @@ export async function refireCall(token: string, callId: string): Promise<CallerC
 }
 
 export async function retargetCall(token: string, callId: string, targetRunnerId: string): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/calls/${callId}/retarget`, {
+  const res = await fetch(`${apiUrl.current}/api/calls/${callId}/retarget`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ targetRunner: targetRunnerId }),
@@ -367,7 +349,7 @@ export async function retargetCall(token: string, callId: string, targetRunnerId
 export async function countCompletedToday(token: string, runnerId: string, sinceIso: string): Promise<number> {
   const filter = `acceptedBy = "${runnerId}" && status = "completed" && completedAt >= "${sinceIso}"`;
   const res = await fetch(
-    `${API_URL}/api/collections/calls/records?perPage=1&filter=${encodeURIComponent(filter)}`,
+    `${apiUrl.current}/api/collections/calls/records?perPage=1&filter=${encodeURIComponent(filter)}`,
     { headers: authHeaders(token) },
   );
   if (!res.ok) {
@@ -380,7 +362,7 @@ export async function countCompletedToday(token: string, runnerId: string, since
 export async function countDeclinedToday(token: string, sinceIso: string): Promise<number> {
   const filter = `created >= "${sinceIso}"`;
   const res = await fetch(
-    `${API_URL}/api/collections/declines/records?perPage=1&filter=${encodeURIComponent(filter)}`,
+    `${apiUrl.current}/api/collections/declines/records?perPage=1&filter=${encodeURIComponent(filter)}`,
     { headers: authHeaders(token) },
   );
   if (!res.ok) {
@@ -393,7 +375,7 @@ export async function countDeclinedToday(token: string, sinceIso: string): Promi
 export type CallerRunner = { id: string; name: string };
 
 export async function listRunners(token: string): Promise<CallerRunner[]> {
-  const res = await fetch(`${API_URL}/api/collections/users/records?filter=${encodeURIComponent('canRun = true')}`, {
+  const res = await fetch(`${apiUrl.current}/api/collections/users/records?filter=${encodeURIComponent('canRun = true')}`, {
     headers: authHeaders(token),
   });
   if (!res.ok) {
@@ -404,7 +386,7 @@ export async function listRunners(token: string): Promise<CallerRunner[]> {
 }
 
 export async function acceptCall(token: string, callId: string): Promise<CallerCall> {
-  const res = await fetch(`${API_URL}/api/calls/${callId}/accept`, {
+  const res = await fetch(`${apiUrl.current}/api/calls/${callId}/accept`, {
     method: 'POST',
     headers: authHeaders(token),
   });

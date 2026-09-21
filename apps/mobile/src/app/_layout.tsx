@@ -3,7 +3,9 @@ import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
+import { ServerGate } from '@/components/server-gate';
 import { I18nProvider } from '@/lib/i18n';
+import { ServerProvider } from '@/lib/server';
 import { AuthProvider } from '@/lib/session';
 
 function NotificationTapHandler() {
@@ -25,16 +27,20 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <I18nProvider>
-          <NotificationTapHandler />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
-          </Stack>
-        </I18nProvider>
-      </AuthProvider>
+      <ServerProvider>
+        <ServerGate>
+          <AuthProvider>
+            <I18nProvider>
+              <NotificationTapHandler />
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="login" />
+                <Stack.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
+              </Stack>
+            </I18nProvider>
+          </AuthProvider>
+        </ServerGate>
+      </ServerProvider>
     </ThemeProvider>
   );
 }
