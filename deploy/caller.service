@@ -1,0 +1,21 @@
+[Unit]
+Description=caller server
+After=network.target
+
+[Service]
+Type=simple
+User=caller
+Group=caller
+EnvironmentFile=/etc/caller/caller.env
+Environment=PB_DATA_DIR=/var/lib/caller/pb_data
+ExecStart=/opt/caller/caller serve --http=0.0.0.0:8090
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/caller
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
